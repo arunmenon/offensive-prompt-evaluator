@@ -7,6 +7,11 @@ import pandas as pd
 from sklearn.metrics import precision_score, recall_score, f1_score
 from datetime import datetime
 from multiprocessing import Pool, cpu_count
+import time
+import requests
+import random
+from tqdm import tqdm
+
 
 # Set your OpenAI API key (make sure you've set this in your environment variables)
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -29,8 +34,9 @@ def load_prompt(prompt_file):
         print(f"Error: The prompt file '{prompt_file}' was not found.")
         return None
 
-# Function to send image and prompt to GPT-4-o model
-def send_prompt_with_image(encoded_image, prompt):
+
+
+def send_prompt_with_image(encoded_image, prompt, max_retries=3):
     if not encoded_image:
         return "DUMMY"  # Return a dummy value if the image can't be encoded
 
@@ -42,30 +48,52 @@ def send_prompt_with_image(encoded_image, prompt):
 
     # Payload to send to OpenAI with the prompt and encoded image
     payload = {
-        "model": "gpt-4o-mini",  # Replace with the correct model name
+        "model": "gpt-4o-mini",  
         "messages": [
             {"role": "system", "content": "You are an image classifier checking for offensive content."},
             {"role": "user", "content": prompt},
             {"role": "user", "content": f"data:image/jpeg;base64,{encoded_image}"}
         ],
-        "max_tokens": 1500  # Adjust this based on your needs
+        "max_tokens": 500  # Adjust this based on your needs
     }
 
-    # Send the request to OpenAI
-    try:
-        response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
-        response.raise_for_status()
-        result = response.json()
+    retries = 0  # Keep track of how many retries have been made
+
+    while retries < max_retries:
+        try:
+            # Send the request to OpenAI
+            response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+            
+            # Check if the response is OK (status code 200)
+            response.raise_for_status()
+            
+            # Parse the response JSON
+            result = response.json()
+            
+            if 'choices' in result and result['choices']:
+                print(f"Successfully processed the image with prompt: {prompt}")
+                return result['choices'][0]['message']['content'].strip()
+            else:
+                print("Error: No valid response from GPT-4-o")
+                return "DUMMY"
         
-        if 'choices' in result and result['choices']:
-            return result['choices'][0]['message']['content'].strip()
-        else:
-            print(f"Error: No valid response from GPT-4-o")
+        except requests.exceptions.HTTPError as http_err:
+            # If we hit the rate limit (429 Too Many Requests), retry
+            if response.status_code == 429:
+                retries += 1
+                # Randomized exponential backoff: base wait time + a small random float
+                wait_time = 2 ** retries + random.uniform(0, 1)  # Adds some randomness to avoid clumping
+                print(f"Rate limit reached. Retrying in {wait_time} seconds... (Attempt {retries}/{max_retries})")
+                time.sleep(wait_time)  # Wait before retrying
+            else:
+                print(f"HTTP error occurred: {http_err}")
+                return "DUMMY"
+        except requests.exceptions.RequestException as e:
+            print(f"Error: API request failed - {e}")
             return "DUMMY"
     
-    except requests.exceptions.RequestException as e:
-        print(f"Error: API request failed - {e}")
-        return "DUMMY"
+    print("Error: Max retries reached. Returning DUMMY.")
+    return "DUMMY"
 
 # Function to parse the GPT-4-o response
 def parse_gpt_response(response):
@@ -151,9 +179,11 @@ def save_metrics(metrics, result_path):
             f.write(json.dumps(metric, indent=4))
 
 # Main function to load dataset, run prompts in parallel, and calculate metrics
+
+
 def main():
     # Path to the dataset and prompt files
-    dataset_path = "path_to_your_image_dataset.csv"  # Update this path
+    dataset_path = "./downloaded_images/Images_Ground_Truth.csv"  # Update this path
     prompts_folder = "prompts/"  # Folder containing multiple prompt text files
 
     # Load the dataset of images and labels
@@ -169,8 +199,15 @@ def main():
 
     # Set up multiprocessing pool to evaluate prompts in parallel
     num_processes = min(len(prompts), cpu_count())
-    with Pool(num_processes) as pool:
-        results_list = pool.map(evaluate_single_prompt, [(df, prompt, encoded_images) for prompt in prompts])
+    
+    # Initialize tqdm progress bar with the total number of prompts
+    with tqdm(total=len(prompts), desc="Evaluating Prompts", unit="prompt") as pbar:
+        with Pool(num_processes) as pool:
+            # For each completed prompt, update the progress bar manually
+            results_list = []
+            for result in pool.imap_unordered(evaluate_single_prompt, [(df, prompt, encoded_images) for prompt in prompts]):
+                results_list.append(result)
+                pbar.update(1)  # Update progress bar after each prompt evaluation
 
     # Process the results
     results = {prompt: predictions for prompt, predictions in results_list if predictions}
