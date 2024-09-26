@@ -1,203 +1,123 @@
-### README: **Prompt Loader and Evaluator System**
+# **Offensive Image Prompt Eval Framework**
 
-This README provides detailed instructions and insights into how to run the **Prompt Loader** and **Prompt Evaluator** tools, along with the key benefits and how they can be leveraged to test and improve the quality of prompts.
+This repository provides a framework to compare the **efficacy of different prompt templates** against an offensive image dataset, using GPT models for image classification. It helps evaluate multiple prompts and measure their performance by comparing model predictions with a labeled ground truth dataset. This framework is designed to automate the process of running prompts against a dataset, collecting results, and calculating precision, recall, and F1-score metrics for each prompt.
 
----
+## **1. Overview of the Framework**
 
-## Table of Contents
+### **Purpose**:
+The primary goal of this framework is to automate the comparison of different prompts to identify offensive images based on a pre-labeled ground truth dataset. The framework is designed to handle:
+- **Batch processing of images**: Evaluates a dataset of images and checks each image using different prompt templates.
+- **Prompt comparison**: Compares multiple prompt templates and measures their accuracy and efficiency in detecting offensive content.
+- **Dynamic prompt handling**: It includes a **dynamic prompt loader**, which allows the system to load prompts and their corresponding exception rules from external files, making the framework adaptable to new rules or prompt formats.
 
-1. [Overview](#overview)
-2. [Key Benefits](#key-benefits)
-3. [Folder Structure](#folder-structure)
-4. [Prompt Loader](#prompt-loader)
-    - [How to Use](#how-to-use-prompt-loader)
-    - [Command-Line Arguments](#command-line-arguments-for-prompt-loader)
-5. [Prompt Evaluator](#prompt-evaluator)
-    - [How to Use](#how-to-use-prompt-evaluator)
-    - [Command-Line Arguments](#command-line-arguments-for-prompt-evaluator)
-6. [Testing Prompt Quality](#testing-prompt-quality)
-7. [Examples](#examples)
-8. [Troubleshooting](#troubleshooting)
+### **Current Prompts**:
+The prompts currently implemented in this framework are designed to detect offensive content such as:
+- **Nudity or sexually suggestive content**
+- **Hate speech or discriminatory symbols**
+- **Graphic and violent imagery**
+- **Misleading or harmful information**
+- **Illegal or unsafe products**
+  
+Each of these prompts is dynamically loaded and can be adjusted based on evolving requirements. The framework is built to accommodate customizable exceptions (e.g., educational or artistic contexts), which are also loaded dynamically to handle edge cases (e.g., classical art depictions of nudity).
 
----
+### **Dynamic Prompt Loader**:
+The **Dynamic Prompt Loader** allows you to easily manage and modify the prompts used for image analysis. You can define new prompt templates or modify existing ones and load them at runtime without changing the underlying codebase. It also ensures that exceptions (such as classical art or medical content) are dynamically integrated into the prompt logic.
 
-## Overview
-
-The **Prompt Loader and Evaluator System** is designed to assist in generating, organizing, and evaluating prompts dynamically, particularly for tasks like catalog content evaluation where specific guidelines and exceptions need to be applied. 
-
-The system consists of two main components:
-
-1. **Prompt Loader**: Dynamically generates prompts using a template and a JSON configuration of exceptions. The generated prompts are saved in a specified folder with numbered filenames.
-2. **Prompt Evaluator**: Evaluates the quality and effectiveness of the generated prompts by processing them based on predefined criteria.
+This system provides:
+- **Flexibility**: Modify and load new prompts or exceptions without altering the core code.
+- **Scalability**: Easily add more prompts or adjust the detection rules as new offensive categories or guidelines are introduced.
+- **Maintainability**: Prompts and their corresponding rules can be managed as external files, making it easier to iterate and refine over time.
 
 ---
 
-## Key Benefits
+## **2. Folder Structure**
 
-### **1. Prompt Loader**
-
-- **Dynamic and Configurable**: The **Prompt Loader** allows dynamic generation of prompts using **templates** and an **exceptions config** (JSON file). It decouples the logic from specific prompts, making it easy to update templates and configurations.
-- **Automated Naming**: The generated prompts are automatically named in sequence (`Prompt1.txt`, `Prompt2.txt`, etc.) in the destination folder, ensuring clean organization.
-- **Error Handling**: The loader checks for missing placeholders in the exception config and provides clear error messages when a placeholder is missing from the JSON file, ensuring that your prompts are always complete.
-
-### **2. Prompt Evaluator**
-
-- **Prompt Quality Testing**: The **Prompt Evaluator** is designed to test the effectiveness of the generated prompts. It can be used to assess whether the prompts adhere to guidelines and exceptions, and whether they are actionable for specific tasks like content moderation.
-- **Automated Evaluation**: By automatically processing and evaluating all generated prompts in a folder, the evaluator allows for large-scale testing of prompt variations, which can help fine-tune and improve prompt quality.
-- **Scalability**: The system is designed to handle multiple prompts at scale, making it ideal for iterative testing and refinement of prompts in scenarios like trust and safety reviews, product categorization, and more.
-
----
-
-## Folder Structure
-
-This is the suggested folder structure for your project:
+The project is structured as follows:
 
 ```plaintext
 .
-├── downloaded_images/            # Folder to store downloaded images (if applicable)
-├── guidelines/                   # Folder containing JSON config for exceptions
-│   └── walmart_exceptions.json
-├── prompt_loader.py              # Script for loading prompt templates and generating prompts
-├── prompt_templates/             # Folder containing prompt template files
-│   └── prompt_template.txt       # Example prompt template file
-├── prompts/                      # Folder where generated prompts are saved
-│   └── Prompt1.txt               # Example generated prompt
-├── prompt_eval.py                # Script for evaluating generated prompts
+├── downloaded_images/             # Folder containing images for evaluation.
+│   ├── image1.jpg
+│   ├── image2.jpg
+│   └── ...
+├── prompts/                       # Folder containing prompt text files (dynamic prompts).
+│   ├── Prompt1.txt
+│   ├── Prompt2.txt
+│   └── ...
+├── prompt_templates/              # Folder containing prompt templates with placeholders.
+│   ├── template1.txt
+│   └── template2.txt
+├── guidelines/                    # Folder containing exception rules and safety guidelines.
+│   ├── safety_guidelines.json
+│   └── exceptions.json
+├── results/                       # Folder where the evaluation results are stored.
+│   └── metrics_Prompt1.txt
+├── Image-downloader.py            # Script for downloading images from URLs.
+├── prompt_eval.py                 # Main script for evaluating prompts against the image dataset.
+├── prompt_loader.py               # Script for dynamically loading prompts and handling exceptions.
+└── Images_Ground_Truth.csv        # CSV file containing the image paths and their ground truth labels.
 ```
+
+### **Folder Descriptions**:
+- **`downloaded_images/`**: This folder contains the images you want to evaluate. Each image should be listed in the `Images_Ground_Truth.csv` file with its path and label (offensive or not_offensive).
+  
+- **`prompts/`**: This folder contains the prompt files that are dynamically loaded during evaluation. You can create or modify these prompts to meet your specific use cases. Each prompt file will be evaluated against the image dataset.
+  
+- **`prompt_templates/`**: This folder contains **prompt templates** with placeholders for exceptions or rules. The **Dynamic Prompt Loader** reads these templates and fills them based on guidelines and rules from the `guidelines/` folder.
+  
+- **`guidelines/`**: This folder contains safety guidelines and exceptions that are dynamically injected into the prompts. Files such as `safety_guidelines.json` define what kind of content is flagged, and `exceptions.json` defines exceptions like "classical art" or "medical content."
+
+- **`results/`**: This folder stores the results of the prompt evaluation, including metrics for each prompt in a text file. These metrics include precision, recall, and F1-scores for how well each prompt detects offensive content.
+  
+- **`Images_Ground_Truth.csv`**: The CSV file where each row corresponds to an image in the `downloaded_images/` folder and includes its ground truth label (either `offensive` or `not_offensive`). This dataset is used to compare the model's output with the actual label.
 
 ---
 
-## Prompt Loader
+## **3. How to Run the Scripts**
 
-### **How to Use Prompt Loader**
+### **Running the Dynamic Prompt Loader**:
+The **prompt_loader.py** script is responsible for dynamically loading prompts and injecting relevant safety rules or exceptions.
 
-The **Prompt Loader** script dynamically generates prompts using a template file and an exceptions config (JSON). The generated prompts are saved in the `prompts/` folder with a numbered filename (`Prompt1.txt`, `Prompt2.txt`, etc.).
+To load prompts dynamically, run the following command:
+```bash
+python3 prompt_loader.py --template_path prompt_templates/ --guidelines_path guidelines/safety_guidelines.json --output_path prompts/
+```
 
-### **Command-Line Arguments for Prompt Loader**
+This script will:
+- Read prompt templates from the `prompt_templates/` folder.
+- Load safety rules and exceptions from the `guidelines/` folder.
+- Dynamically generate the final prompts and save them into the `prompts/` folder.
 
-You need to pass the following arguments when running the script:
-
-1. **`--exceptions`**: Path to the **exceptions JSON file** (e.g., `guidelines/walmart_exceptions.json`).
-2. **`--template`**: Path to the **prompt template file** (e.g., `prompt_templates/prompt_template.txt`).
-3. **`--destination`**: Folder where the generated prompts will be saved (e.g., `prompts/`).
-
-**Command Example**:
+### **Running the Prompt Evaluation**:
+Once the prompts are loaded, you can evaluate the image dataset using the **prompt_eval.py** script.
 
 ```bash
-python prompt_loader.py --exceptions guidelines/walmart_exceptions.json --template prompt_templates/prompt_template.txt --destination prompts/
+python3 prompt_eval.py --image_dataset ./downloaded_images/Images_Ground_Truth.csv --prompts_folder prompts/ --output results/
 ```
 
-- This command will generate the next available numbered prompt file (e.g., `Prompt3.txt`) and save it in the `prompts/` folder.
+This will:
+- Evaluate each image in `downloaded_images/` using each prompt in the `prompts/` folder.
+- For each prompt, the system will calculate **precision**, **recall**, and **F1-score** metrics based on the ground truth labels in the `Images_Ground_Truth.csv` file.
+- The evaluation results will be saved into the `results/` folder.
 
 ---
 
-## Prompt Evaluator
+## **4. Key Benefits of This Framework**
 
-### **How to Use Prompt Evaluator**
+### **1. Prompt Evaluation**:
+- Provides a structured way to compare the efficacy of different prompts for detecting offensive content in product images.
+- Automatically calculates key metrics such as **precision**, **recall**, and **F1-score** to help you evaluate the performance of each prompt.
 
-The **Prompt Evaluator** script is designed to evaluate the generated prompts. It reads the prompts from the designated folder and processes them to perform evaluations, such as checking for specific criteria in a catalog system.
+### **2. Dynamic Prompt Loading**:
+- Enables the system to adjust prompts dynamically by injecting safety guidelines and exception rules, making it highly flexible and adaptable to evolving requirements.
+- Supports easy integration of new rules and guidelines without changing the underlying code.
 
-### **Command-Line Arguments for Prompt Evaluator**
+### **3. Scalable and Maintainable**:
+- This framework can scale as more prompts and images are added. It also makes it easy to maintain the system since prompts and rules are stored externally and can be updated independently.
 
-The following arguments are expected for the **Prompt Evaluator** script:
-
-1. **`--prompts_folder`**: Path to the folder containing the generated prompts (e.g., `prompts/`).
-2. **`--output`**: Path to the output folder where evaluation results will be saved (e.g., `output/`).
-
-**Command Example**:
-
-```bash
-python prompt_eval.py --prompts_folder prompts/ --output output/
-```
-
-- This command will evaluate all the generated prompts from the `prompts/` folder and save the evaluation results in the `output/` folder.
+### **4. Versatile Application**:
+- You can use this framework not only for offensive content detection but also for other use cases, such as detecting harmful, misleading, or illegal products, depending on how the prompts and guidelines are configured.
 
 ---
 
-## Testing Prompt Quality
-
-### **Why Test Prompt Quality?**
-
-Testing prompt quality is essential to ensure that the generated prompts are effective, actionable, and adhere to guidelines such as Trust & Safety (T&S) rules. By testing prompts iteratively, you can:
-- Identify areas where prompts may be ambiguous or unclear.
-- Ensure that prompts are correctly applying the exception rules from the JSON config.
-- Fine-tune prompt wording to improve accuracy in identifying flagged content or adhering to product moderation guidelines.
-
-### **Steps to Test Prompt Quality**
-
-1. **Generate Multiple Prompts**: Use the **Prompt Loader** to generate a range of prompts using different templates and exception configurations. These prompts will be saved in the `prompts/` folder with sequential numbering.
-
-2. **Evaluate Prompts**: Run the **Prompt Evaluator** to assess the generated prompts. The evaluation process will check the prompts against specific criteria (e.g., Trust & Safety guidelines, content moderation rules).
-
-3. **Analyze Results**: The output from the evaluator will help you analyze how well each prompt performs. By comparing the results, you can identify:
-   - **Precision**: How accurately the prompt captures the intended content.
-   - **Recall**: How many relevant cases the prompt identifies correctly.
-   - **False Positives/Negatives**: Instances where the prompt may have flagged content incorrectly or missed relevant content.
-
-4. **Iterate on Improvements**: Based on the evaluation results, adjust your prompt templates and exceptions config. Re-run the **Prompt Loader** to generate new prompts, and repeat the evaluation cycle to continuously improve prompt quality.
-
----
-
-## Examples
-
-### Example 1: **Generating Prompts**
-
-Assume you have a template (`prompt_template.txt`) and an exceptions config file (`walmart_exceptions.json`). To generate a prompt, run the following command:
-
-```bash
-python prompt_loader.py --exceptions guidelines/walmart_exceptions.json --template prompt_templates/prompt_template.txt --destination prompts/
-```
-
-If `Prompt1.txt` and `Prompt2.txt` already exist in the `prompts/` folder, this command will generate `Prompt3.txt`.
-
-### Example 2: **Evaluating Generated Prompts**
-
-After generating prompts, you can evaluate them using the **Prompt Evaluator** script:
-
-```bash
-python prompt_eval.py --prompts_folder prompts/ --output output/
-```
-
-This will process all the prompt files in the `prompts/` folder and save the evaluation results in the `output/` folder.
-
----
-
-## Troubleshooting
-
-### 1. **File Not Found Errors**
-
-If you receive an error like:
-```plaintext
-Error: The prompt template file 'prompt_templates/prompt_template.txt' was not found.
-```
-- Ensure that the file paths provided for `--exceptions` and `--template` are correct.
-- Verify that the files exist in the specified locations.
-
-### 2. **Missing Placeholders in Exceptions Config**
-
-If a placeholder in the template cannot be found in the exceptions config, you will see an error like:
-```plaintext
-Error: Placeholder 'placeholder_name' not found in exceptions config. Unable to generate prompt.
-```
-- Ensure that the placeholder in the template matches a key in the exceptions config.
-- Check your `walmart_exceptions.json` to ensure all necessary keys are present.
-
-### 3. **Empty Prompts Folder**
-
-If no prompts are generated or evaluated, ensure that:
-- The `prompts/` folder is correctly specified.
-- The prompt loader script is correctly generating numbered files.
-
----
-
-## Summary
-
-- **Prompt Loader**: Dynamically generates prompts based on templates and exception configs.
-- **Prompt Evaluator**: Evaluates the generated prompts for specific criteria.
-- Use the **command-line arguments** to specify paths for templates, exceptions, and destination/output folders.
-- Ensure that the **file paths are correct** and the placeholders in the templates match the keys in the exceptions config.
-
-By leveraging these tools, you can **iteratively test prompt quality**, ensuring that your prompts are both effective and aligned with specific task requirements, such as Trust & Safety guidelines or product moderation standards.
-
-For any issues, refer to the **Troubleshooting** section.
-
+Let me know if you need any further changes or additions!
