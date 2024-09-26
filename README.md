@@ -1,8 +1,4 @@
-Let's expand the **ReadMe** to include the structure of the **third prompt template**, and how it dynamically incorporates **exclusions** from a separate configuration file.
-
----
-
-# **Offensive Image Detection Framework**
+# **Offensive Image Prompt Eval Framework**
 
 This repository provides a framework to compare the **efficacy of different prompt templates** against an offensive image dataset using GPT models for image classification. It helps evaluate multiple prompts and measure their performance by comparing model predictions with a labeled ground truth dataset. This framework is designed to automate the process of running prompts against a dataset, collecting results, and calculating precision, recall, and F1-score metrics for each prompt.
 
