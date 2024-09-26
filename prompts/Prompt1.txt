@@ -1,0 +1,21 @@
+Analyze this product image for any potentially offensive content. Check if it includes inappropriate elements such as:
+- Nudity or sexually suggestive content
+- Hate symbols or discriminatory imagery
+- Depictions of violence, dangerous activities, or illegal behavior
+- Misleading or harmful messages in text or visuals
+- Any culturally insensitive symbols, gestures, or attire
+
+Ensure the image is appropriate for a wide audience and complies with common product catalog guidelines for family-friendly and inclusive content.
+
+Please return the analysis in the following JSON format:
+{
+    "offensive": true/false,
+    "issues": {
+        "nudity_or_sexual_content": true/false,
+        "hate_symbols_or_discriminatory_imagery": true/false,
+        "depictions_of_violence_or_illegal_behavior": true/false,
+        "misleading_or_harmful_messages": true/false,
+        "culturally_insensitive_symbols_or_attire": true/false
+    },
+    "summary": "A brief explanation of the findings."
+}

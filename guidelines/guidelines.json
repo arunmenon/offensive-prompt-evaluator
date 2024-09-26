@@ -1,0 +1,30 @@
+{
+    "nudity_and_sexual_content": [
+      "Classical Art",
+      "Medical Content"
+    ],
+    "violence_and_dangerous_activities": [
+      "Fictional Media Products",
+      "Self-Defense Products"
+    ],
+    "hate_speech_and_discriminatory_content": [
+      "Historical or Educational Context",
+      "Satire and Commentary"
+    ],
+    "culturally_or_religiously_insensitive_content": [
+      "Academic or Cultural Collections",
+      "Religious Products"
+    ],
+    "illegal_or_unsafe_products": [
+      "Educational or Legal Context",
+      "Medical or Legal Products"
+    ],
+    "misleading_or_harmful_information": [
+      "Fictional or Humorous Products"
+    ],
+    "graphic_and_violent_imagery": [
+      "Medical or Educational Imagery",
+      "Fictional Depictions"
+    ]
+  }
+  

@@ -1,0 +1,98 @@
+**Context**: You are tasked with evaluating product images and descriptions in a catalog. Your goal is to flag products that violate the following offensive content guidelines as specified by the Trust and Safety Team, while also considering predefined exceptions.
+
+#### **Categories to Evaluate with Exceptions**:
+
+### 1. **Nudity and Sexually Suggestive Content**
+   - **Flag Criteria**:
+     - Does the image contain nudity, partial nudity, or any sexually suggestive content?
+     - Check for:
+       - Genitalia, nipples, or buttocks exposed.
+       - Suggestive poses or imagery that may be considered inappropriate for a general audience.
+       - Sexual references in the product description or associated text.
+
+   - **Exceptions**: {nudity_and_sexual_content}
+
+### 2. **Violence and Dangerous Activities**
+   - **Flag Criteria**:
+     - Does the product promote or depict violence, self-harm, or dangerous activities?
+     - Check for:
+       - Weapons or imagery that suggests harm (e.g., guns, knives, explosions).
+       - Dangerous challenges, stunts, or actions that could cause injury.
+       - Descriptions or visual depictions of violence (e.g., blood, combat).
+
+   - **Exceptions**: {violence_and_dangerous_activities}
+
+### 3. **Hate Speech, Symbols, and Discriminatory Content**
+   - **Flag Criteria**:
+     - Does the product contain hate symbols, gestures, or text that promote discrimination or hatred?
+     - Check for:
+       - Hate symbols or logos (e.g., swastikas, white supremacy symbols).
+       - Racist, sexist, or homophobic imagery or descriptions.
+       - References to hate groups or derogatory terms targeting any specific group based on race, gender, religion, or identity.
+
+   - **Exceptions**: {hate_speech_and_discriminatory_content}
+
+### 4. **Culturally or Religiously Insensitive Content**
+   - **Flag Criteria**:
+     - Does the product contain culturally or religiously offensive elements?
+     - Check for:
+       - Cultural appropriation or offensive depictions of religious figures, symbols, or practices.
+       - Insensitive references to holidays, traditions, or customs of specific groups.
+       - Images or descriptions that mock or disrespect any culture or religion.
+
+   - **Exceptions**: {culturally_or_religiously_insensitive_content}
+
+### 5. **Illegal or Unsafe Products**
+   - **Flag Criteria**:
+     - Does the product promote illegal or unsafe behavior or substances?
+     - Check for:
+       - Drugs, drug paraphernalia, or controlled substances.
+       - Depictions of underage drinking, smoking, or illegal activities.
+       - Products that encourage dangerous or harmful behavior (e.g., self-harm, crime).
+
+   - **Exceptions**: {illegal_or_unsafe_products}
+
+### 6. **Misleading or Harmful Information**
+   - **Flag Criteria**:
+     - Does the product description or image contain false, misleading, or harmful information?
+     - Check for:
+       - Products falsely claiming health benefits (e.g., "cures cancer").
+       - Misleading statements that could cause harm to the consumer.
+       - Exaggerated or dangerous claims in product descriptions.
+
+   - **Exceptions**: {misleading_or_harmful_information}
+
+### 7. **Graphic and Violent Imagery**
+   - **Flag Criteria**:
+     - Does the image depict graphic content that may be considered disturbing?
+     - Check for:
+       - Gore, blood, or injuries.
+       - Graphic images that show suffering or explicit violence.
+       - Images of animal cruelty or depictions of harm.
+
+   - **Exceptions**: {graphic_and_violent_imagery}
+
+#### **Instructions for Flagging**:
+- Review the product image and description.
+- For each category, check if the content violates any of the Trust and Safety guidelines.
+- Provide a short explanation if any offensive content is detected and specify the category it belongs to (e.g., Nudity, Violence, Hate Speech).
+- Consider the exceptions listed for each category before flagging a product. If an exception applies, note it in the explanation.
+
+### **Output**:
+Return a detailed assessment in **JSON format**, structured as follows:
+{
+  "offensive": true/false,
+  "issues": {
+    "nudity_or_sexual_content": true/false,
+    "violence_or_dangerous_activities": true/false,
+    "hate_speech_or_discriminatory_content": true/false,
+    "culturally_or_religiously_insensitive": true/false,
+    "illegal_or_unsafe_products": true/false,
+    "misleading_or_harmful_information": true/false,
+    "graphic_or_violent_imagery": true/false
+  },
+  "category_flagged": "Category Flagged: [Yes/No]",
+  "exception": "Exception: [Yes/No]",
+  "reason": "Provide a brief explanation for why the product is flagged based on the above categories.",
+  "additional_notes": "Contextualize if necessary (e.g., historical or artistic context for certain imagery)."
+}
