@@ -1,6 +1,8 @@
-# **Offensive Image Prompt Eval Framework**
+---
 
-This repository provides a framework to compare the **efficacy of different prompt templates** against an offensive image dataset using GPT models for image classification. It helps evaluate multiple prompts and measure their performance by comparing model predictions with a labeled ground truth dataset. This framework is designed to automate the process of running prompts against a dataset, collecting results, and calculating precision, recall, and F1-score metrics for each prompt.
+# **Offensive Image Prompt Evaluation Framework**
+
+This repository provides a framework to compare the **efficacy of different prompt templates** against an offensive image dataset using GPT models for image classification. It helps evaluate multiple prompts and measure their performance by comparing model predictions with a labeled ground truth dataset. Additionally, the framework supports **prompt metadata generation** using GPT-4, enabling prompt scoring, versioning, and governance.
 
 ## **1. Overview of the Framework**
 
@@ -9,6 +11,7 @@ The primary goal of this framework is to automate the comparison of different pr
 - **Batch processing of images**: Evaluates a dataset of images and checks each image using different prompt templates.
 - **Prompt comparison**: Compares multiple prompt templates and measures their accuracy and efficiency in detecting offensive content.
 - **Dynamic prompt handling**: It includes a **dynamic prompt loader**, which allows the system to load prompts and their corresponding exception rules from external files, making the framework adaptable to new rules or prompt formats.
+- **Prompt metadata generation**: Automates metadata extraction and prompt scoring using GPT-4, enabling **prompt governance** and tracking prompt evolution over time.
 
 ### **Current Prompts**:
 The prompts currently implemented in this framework are designed to detect offensive content such as:
@@ -26,46 +29,10 @@ Each of these prompts is dynamically loaded and can be adjusted based on evolvin
 
 The **third prompt template** is specifically designed to incorporate **exclusions** or **exceptions** dynamically from a configuration file. This allows for more precise handling of edge cases such as classical art or medical content, which might otherwise be flagged incorrectly.
 
-### **Template Structure**:
+#### **Template Structure**:
 The third prompt is structured to flag offensive content while considering specific **exceptions**. The prompt will dynamically fill in exclusions based on a JSON configuration file that defines rules and edge cases for each category. 
 
-#### **Example Prompt Template**:
-```plaintext
-Context: You are tasked with evaluating product images and descriptions in a catalog. Your goal is to flag products that violate the following offensive content guidelines as specified by the Trust and Safety Team, while also considering predefined exceptions.
-
-Categories to Evaluate with Exceptions:
-
-1. Nudity and Sexually Suggestive Content
-    Flag Criteria:
-    - Does the image contain nudity, partial nudity, or sexually suggestive content?
-
-    Exceptions: 
-    - Classical Art: Full or partial nudity in classical art or educational materials may be exempt from flagging, as long as the context clearly indicates educational or artistic value.
-
-2. Violence and Dangerous Activities
-    Flag Criteria:
-    - Does the product promote or depict violence, self-harm, or dangerous activities?
-
-    Exceptions:
-    - Fictional Media Products: Imagery of violence may be acceptable for books, movies, or video games.
-
-[Other categories and their exceptions continue...]
-
-Instructions for Flagging:
-- Review the product image and description.
-- Provide a detailed assessment, structured as follows:
-    - Offensive: true/false
-    - Issues:
-        - Nudity: true/false
-        - Violence: true/false
-        - Hate Speech: true/false
-        - [other categories...]
-
-    - Exception Applied: true/false
-    - Reason: Provide an explanation for why the product is flagged, if applicable.
-```
-
-### **Combining with Exclusions**:
+#### **Combining with Exclusions**:
 The **exclusions** (like **Classical Art**, **Medical Content**, etc.) are pulled dynamically from a **separate configuration file** (e.g., `exceptions.json`). The system injects these exclusions into the prompt based on predefined rules for each category.
 
 #### **Example Exclusions Configuration (`exceptions.json`)**:
@@ -103,7 +70,47 @@ The **dynamic prompt loader** reads this configuration and inserts the relevant 
 
 ---
 
-## **2. Folder Structure**
+## **2. Prompt Metadata Generation and Prompt Governance**
+
+In addition to evaluating the efficacy of prompts, this framework supports **prompt metadata generation** using **GPT-4**. The **Prompt Metadata Generator** script enables automated extraction of key information about each prompt, including **title**, **summary**, **content categories**, **scope**, **risk sensitivity**, **prompt score**, and **score reasoning**.
+
+### **1. GPT-4 Powered Scoring Mechanism**:
+- The framework uses **GPT-4** to analyze each prompt and extract relevant metadata. This process includes generating a **short summary**, categorizing the content (e.g., nudity, violence), and providing a **score** between 1 and 5.
+- **Scoring Criteria**: The score reflects how clear, safe, and reliable the prompt is, based on GPT-4’s understanding of the prompt structure and its ability to handle exceptions. A score of 5 indicates a highly reliable prompt, while lower scores might indicate areas for improvement.
+
+### **2. Versioning Support**:
+- **Versioning**: Each prompt’s metadata is version-controlled. This allows tracking the **evolution of prompts** over time, making it possible to see how a prompt has changed or improved after adjustments.
+- **Change Detection**: The framework compares the latest version of each prompt with the previous versions and identifies **similarities** or **differences** using **cosine similarity**. Minor changes are marked as “Slightly updated,” while significant changes trigger a new version.
+
+### **3. Benefits for Prompt Governance**:
+- **Prompt Governance**: The **metadata generation** and **versioning** features are essential for **prompt governance**, as they allow stakeholders to:
+  - **Track prompt evolution**: Understand how prompts are evolving in terms of scope, exclusions, and overall clarity.
+  - **Monitor prompt quality**: Review prompt scores and adjust the templates based on the performance or feedback from the evaluation.
+  - **Ensure compliance**: Make sure that prompts follow the guidelines for detecting offensive content, while considering appropriate exceptions for specific content types.
+  - **Version Control**: Revert to previous versions if required and compare performance metrics across versions.
+
+### **Example of Prompt Metadata CSV**:
+The prompt metadata is stored in a CSV file (`prompt_metadata.csv`), which includes versioned records of each prompt. Here's an example of how the metadata is structured:
+
+```plaintext
+Prompt File Location,Version,Prompt Title,Creation Date,Last Modified Date,Summary,Content Categories,Prompt Scope,Risk Sensitivity,Prompt Score,Score Reason
+./prompts/Prompt1.txt,1,Product Image Content Analysis,2024-09-26 17:45:56,2024-09-26 17:40:47,This prompt asks for an analysis of a product image for offensive content.,Image Analysis, Content Moderation, Specific, High, 5, The prompt is clear, specific, and promotes the detection of offensive content.
+./prompts/Prompt2.txt,1,Product Description Evaluation,2024-09-26 23:27:14,2024-09-26 17:49:42,Evaluate product descriptions for offensive content.,Nudity, Violence, Hate Speech, Broad, Medium, 4, Provides detailed guidelines but may need adjustments for cultural sensitivity.
+./prompts/Prompt1.txt,2,Product Image Content Analysis,2024-09-26 17:45:56,2024-09-27 09:30:47,Slightly updated: Review product image for potential violations.,Nudity, Violence, Image Analysis, Specific, High, 5, Same as before.
+./prompts/Prompt2.txt,2,Product Description Evaluation,2024-09-26 23:27:14,2024-09-27 09:32:42,Updated for clarity and additional content categories.,Nudity, Violence, Hate Speech, Misleading Content, Broad, Medium, 5, Adjustments made for a broader coverage of violations.
+```
+
+In this example:
+- **Versioning**: You can see how each prompt evolves with updates to the title, summary, categories, and score.
+- **Content Categories**: Reflects the list of offensive content types the prompt addresses.
+- **Scope and Risk Sensitivity**: Indicate whether the prompt is broad or specific and the associated risks.
+- **Scoring**: Provides a score that reflects the overall quality of the prompt.
+
+With this metadata, you can better manage and govern how prompts evolve and perform over time.
+
+---
+
+## **3. Folder Structure**
 
 The project is structured as follows:
 
@@ -125,15 +132,19 @@ The project is structured as follows:
 │   └── exceptions.json            # File containing exception rules for each category.
 ├── results/                       # Folder where the evaluation results are stored.
 │   └── metrics_Prompt1.txt
+├── prompt_metadata.csv            # CSV file that stores the metadata generated for each prompt.
 ├── Image-downloader.py            # Script for downloading images from URLs.
 ├── prompt_eval.py                 # Main script for evaluating prompts against the image dataset.
 ├── prompt_loader.py               # Script for dynamically loading prompts and handling exceptions.
+├── prompt_metadata_gen.py         # Script for generating prompt metadata using GPT-4.
 └── Images_Ground_Truth.csv        # CSV file containing the image paths and their ground truth labels.
 ```
 
 ---
 
-## **3. How to Run the Scripts**
+## **4. How to Run the Scripts
+
+**
 
 ### **Running the Dynamic Prompt Loader**:
 To load prompts dynamically, run the following command:
@@ -141,39 +152,14 @@ To load prompts dynamically, run the following command:
 python3 prompt_loader.py --template_path prompt_templates/ --guidelines_path guidelines/safety_guidelines.json --exclusions_path guidelines/exceptions.json --output_path prompts/
 ```
 
-This script will:
-- Read prompt templates from the `prompt_templates/` folder.
-- Load safety rules and exclusions from the `guidelines/` folder.
-- Dynamically generate the final prompts and save them into the `prompts/` folder.
-
-### **Running the Prompt Evaluation**:
-Once the prompts are loaded, you can evaluate the image dataset using the **prompt_eval.py** script.
-
+### **Running the Prompt Metadata Generation**:
+To generate prompt metadata, run the following command:
 ```bash
-python3 prompt_eval.py --image_dataset ./downloaded_images/Images_Ground_Truth.csv --prompts_folder prompts/ --output results/
+python3 prompt_metadata_gen.py --prompts_folder ./prompts/ --output_file prompt_metadata.csv
 ```
 
----
-
-## **4. Key Benefits of This Framework**
-
-### **1. Prompt Evaluation**:
-- Provides a structured way to compare the efficacy of different prompts for detecting offensive content in product images.
-- Automatically calculates key metrics such as **precision**, **recall**, and **F1-score** to help you evaluate the performance of each prompt.
-
-### **2. Dynamic Prompt Loading**:
-- **Exclusions Injection**: The dynamic prompt loader injects specific exclusions like "classical art" and "medical content" from the `exceptions.json` file into the prompt templates, making the system flexible to account for exceptions.
-- **Flexibility**: Modify and load new prompts or exceptions without altering the core code.
-- **Scalability**: Easily add more prompts or adjust the detection rules as new offensive categories or guidelines are introduced.
-
-### **3. Scalable and Maintainable**:
-- This framework can scale as more prompts and images are added. It also makes it easy to maintain the system since prompts and rules are stored externally and can be updated independently.
-
-### **4. Versatile Application**:
-- You can use this framework not only for offensive content detection but also for other use cases, such as detecting harmful, misleading, or illegal products, depending on how the prompts and guidelines are configured.
+This script will:
+- Generate metadata using **GPT-4** for each prompt.
+- Score prompts and track their versions in the **prompt_metadata.csv** file.
 
 ---
-
-With these updates, the ReadMe should now offer a clear understanding of how the **third prompt template** is structured and how the **exclusions** are handled dynamically, along with the rest of the project's functionality.
-
-Let me know if you'd like to refine any other parts!
